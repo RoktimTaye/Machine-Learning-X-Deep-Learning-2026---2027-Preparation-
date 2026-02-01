@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NLP VISUAL - Roktim Taye</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background: #ffffff; 
+            font-family: 'Inter', sans-serif; 
+        }
+
+        /* --- UI LAYER --- */
+        #ui-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* --- 1. TITLE BOX --- */
+        #app-title {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            background: #ffffff;
+            border: 4px solid #000000;
+            border-radius: 12px;
+            padding: 15px 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08); 
+            z-index: 20;
+        }
+
+        .title-main {
+            font-weight: 900;
+            font-size: 1.8rem;
+            color: #000000;
+            display: block;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .title-sub {
+            font-weight: 800;
+            font-size: 0.85rem;
+            color: #80FF00; 
+            text-transform: uppercase;
+            display: block;
+            -webkit-text-stroke: 0.4px #000;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- 2. SMOOTH DEFINITION CARD --- */
+        #info-card {
+            position: absolute;
+            width: 320px; 
+            background: rgba(255, 255, 255, 0.98);
+            border-left: 8px solid #80FF00;
+            padding: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+            border-radius: 8px; 
+            
+            /* Initial Hidden State */
+            opacity: 0; 
+            transform: translateY(30px); /* Start slightly down */
+            
+            /* Smooth Physics-based transition */
+            transition: 
+                opacity 0.5s ease-out,
+                transform 0.7s cubic-bezier(0.22, 1, 0.36, 1); /* "Soft Landing" ease */
+
+            /* Positioning */
+            top: 220px; 
+            z-index: 10;
+        }
+
+        /* Class to trigger visibility */
+        #info-card.visible {
+            opacity: 1;
+            transform: translateY(0px);
+        }
+
+        #info-card h3 {
+            margin: 0 0 8px 0;
+            color: #000;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            font-weight: 900;
+        }
+
+        #info-card p {
+            margin: 0;
+            color: #374151;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            font-weight: 600;
+        }
+
+        /* --- 3. NOTIFICATION BANNER --- */
+        #step-banner {
+            align-self: center;
+            background: #000;
+            color: #fff;
+            padding: 10px 25px;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            transform: translateY(-100px); 
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            margin-top: 10px;
+        }
+        #step-banner.visible { transform: translateY(0); }
+
+        /* --- 4. CONTROLS --- */
+        .controls-wrapper {
+            pointer-events: auto;
+            align-self: center;
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            background: #fff;
+            border: 2px solid #e5e7eb;
+            padding: 20px;
+            border-radius: 14px;
+            box-shadow: 0 15px 30px -5px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            text-align: center;
+            color: #1f2937;
+            text-transform: uppercase;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+        input:focus { border-color: #80FF00; }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 2fr; 
+            gap: 12px;
+            height: 50px; 
+        }
+
+        button {
+            height: 100%;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            border: none;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        #btn-next { 
+            background: #80FF00; 
+            color: #ffffff; 
+            border: 2px solid #000;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+        }
+        #btn-next:hover { 
+            background: #73f000; 
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(128, 255, 0, 0.3);
+        }
+        
+        #btn-reset { 
+            background: #f3f4f6; 
+            color: #374151; 
+            border: 2px solid #e5e7eb;
+        }
+        #btn-reset:hover { background: #e5e7eb; color: #000; }
+
+        /* --- 5. SIDEBAR --- */
+        .steps-sidebar {
+            position: absolute;
+            right: 30px; top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            text-align: right;
+            z-index: 5;
+            pointer-events: none; 
+        }
+        .step-item {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            transition: all 0.4s ease;
+            letter-spacing: 0.5px;
+        }
+        .step-item.active {
+            color: #000;
+            font-weight: 800;
+            font-size: 0.95rem;
+            border-right: 5px solid #80FF00;
+            padding-right: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="ui-layer">
+    <div id="app-title">
+        <span class="title-main">NLP VISUAL</span>
+        <span class="title-sub">By ROKTIM TAYE</span>
+    </div>
+
+    <div id="info-card">
+        <h3 id="info-title">Step Title</h3>
+        <p id="info-desc">Step definition goes here.</p>
+    </div>
+
+    <div id="step-banner">SYSTEM READY</div>
+    
+    <div class="steps-sidebar" id="sidebar"></div>
+
+    <div class="controls-wrapper">
+        <div class="controls">
+            <input type="text" id="user-input" value="AI MODELS LEARN FAST">
+            <div class="btn-group">
+                <button id="btn-reset" onclick="resetSystem()">Reset</button>
+                <button id="btn-next" onclick="nextStep()">Start Pipeline</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 3D SCENE CONFIG ---
+    const ACCENT_COLOR = 0x80FF00; 
+    const ACCENT_HEX = '#80FF00';
+    const WHITE_HEX = '#FFFFFF';
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+    scene.fog = new THREE.Fog(0xffffff, 20, 70);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const cameraStartPos = { x: 0, y: 8, z: 28 }; 
+    camera.position.set(cameraStartPos.x, cameraStartPos.y, cameraStartPos.z);
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.appendChild(renderer.domElement);
+
+    // --- LIGHTING ---
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    scene.add(ambientLight);
+
+    const mainLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    mainLight.position.set(10, 20, 10);
+    mainLight.castShadow = true;
+    mainLight.shadow.mapSize.width = 2048;
+    mainLight.shadow.mapSize.height = 2048;
+    scene.add(mainLight);
+
+    const fillLight = new THREE.DirectionalLight(0xebf8ff, 0.5); 
+    fillLight.position.set(-10, 5, 5);
+    scene.add(fillLight);
+
+    const gridHelper = new THREE.GridHelper(60, 60, 0x000000, 0xf3f4f6);
+    gridHelper.position.y = -0.1; 
+    scene.add(gridHelper);
+
+    // --- STATE & DATA ---
+    let meshes = [];
+    let currentStep = -1;
+
+    // STEP DEFINITIONS
+    const STEP_DATA = [
+        { 
+            title: "1. RAW INPUT STREAM", 
+            desc: "The computer receives your sentence as a raw sequence of characters. It doesn't understand meaning yet, just a string of data." 
+        },
+        { 
+            title: "2. TOKENIZATION", 
+            desc: "The system chops the text into smaller pieces called 'Tokens'. This breaks the complex sentence into manageable word units." 
+        },
+        { 
+            title: "3. STOPWORD REMOVAL", 
+            desc: "Filter logic removes common words (e.g., THE, IS) that add little unique value, leaving only the important keywords." 
+        },
+        { 
+            title: "4. LEMMATIZATION", 
+            desc: "Linguistic simplification. Words are converted to their root form (e.g., 'RUNNING' → 'RUN') to standardize the data." 
+        },
+        { 
+            title: "5. VECTORIZATION", 
+            desc: "Math conversion. Words are turned into numerical vectors (values). To a machine, language is just geometry and numbers." 
+        },
+        { 
+            title: "6. EMBEDDING SPACE", 
+            desc: "Semantic mapping. These vectors are placed in a 3D space. Words with similar meanings naturally cluster together here." 
+        },
+        { 
+            title: "7. NEURAL NETWORK", 
+            desc: "The final step. The numerical patterns are fed into a Neural Network (Brain) which calculates the final output/sentiment." 
+        }
+    ];
+    
+    const STOPWORDS = ['THE', 'IS', 'ARE', 'A', 'AN'];
+    const LEMMAS = { 'RUNNING': 'RUN', 'MODELS': 'MODEL', 'FOXES': 'FOX', 'LEARNING': 'LEARN' };
+
+    // --- INIT UI ---
+    const sidebar = document.getElementById('sidebar');
+    STEP_DATA.forEach((s, i) => {
+        const div = document.createElement('div');
+        div.className = 'step-item';
+        div.id = `step-${i}`;
+        div.innerText = s.title;
+        sidebar.appendChild(div);
+    });
+
+    // --- TEXTURE MAKER ---
+    function createTextTexture(text, bgColor, textColor, borderColor) {
+        bgColor = bgColor || '#000000';
+        textColor = textColor || '#ffffff';
+        borderColor = borderColor || ACCENT_HEX;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0,0,512,256);
+        
+        if(borderColor) {
+            ctx.lineWidth = 15;
+            ctx.strokeStyle = borderColor;
+            ctx.strokeRect(0,0,512,256);
+        }
+
+        ctx.font = '900 85px Inter, sans-serif';
+        ctx.fillStyle = textColor;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        if(bgColor === ACCENT_HEX && textColor === WHITE_HEX) {
+             ctx.shadowColor = "rgba(0,0,0,0.3)";
+             ctx.shadowBlur = 4;
+        }
+        ctx.fillText(text.toUpperCase(), 256, 128);
+
+        return new THREE.CanvasTexture(canvas);
+    }
+
+    // --- ACTIONS ---
+
+    function resetSystem() {
+        meshes.forEach(m => {
+            scene.remove(m.mesh);
+            if(m.mesh.geometry) m.mesh.geometry.dispose();
+            if(m.mesh.material) m.mesh.material.dispose();
+        });
+        meshes = [];
+        
+        for(let i = scene.children.length - 1; i >= 0; i--) {
+            if(scene.children[i].userData.isTemp) {
+                scene.remove(scene.children[i]);
+            }
+        }
+
+        currentStep = -1;
+        document.getElementById('step-banner').classList.remove('visible');
+        
+        // Hide Info Card
+        const info = document.getElementById('info-card');
+        info.classList.remove('visible'); // Remove class to trigger fade out/down
+
+        document.querySelectorAll('.step-item').forEach(e => e.classList.remove('active'));
+        document.getElementById('btn-next').innerText = "START PIPELINE";
+        document.getElementById('btn-next').onclick = nextStep;
+        document.getElementById('user-input').disabled = false;
+
+        gsap.to(camera.position, {
+            x: cameraStartPos.x, 
+            y: cameraStartPos.y, 
+            z: cameraStartPos.z, 
+            duration: 1.8, 
+            ease: "power3.inOut" 
+        });
+    }
+
+    function updateInfoCard(index) {
+        const info = document.getElementById('info-card');
+        const title = document.getElementById('info-title');
+        const desc = document.getElementById('info-desc');
+
+        // 1. Hide First (Fade Out Down)
+        info.classList.remove('visible');
+
+        // 2. Wait for hide transition, then update and Show (Fade In Up)
+        setTimeout(() => {
+            title.innerText = STEP_DATA[index].title;
+            desc.innerText = STEP_DATA[index].desc;
+
+            // Reset positioning styles
+            info.style.left = 'auto';
+            info.style.right = 'auto';
+            info.style.borderLeft = 'none';
+            info.style.borderRight = 'none';
+            info.style.top = '220px'; 
+
+            if (index % 2 === 0) {
+                // RIGHT SIDE (Safe Distance: 250px)
+                info.style.right = '250px'; 
+                info.style.borderRight = `8px solid ${ACCENT_HEX}`;
+            } else {
+                // LEFT SIDE (Safe Distance: 60px)
+                info.style.left = '60px';
+                info.style.borderLeft = `8px solid ${ACCENT_HEX}`;
+            }
+
+            // Trigger Visible Class
+            info.classList.add('visible');
+
+        }, 300); // Wait 300ms before showing next one
+    }
+
+    function nextStep() {
+        const input = document.getElementById('user-input');
+        if(!input.value) return;
+
+        currentStep++;
+        if(currentStep >= STEP_DATA.length) return;
+
+        const banner = document.getElementById('step-banner');
+        banner.innerText = STEP_DATA[currentStep].title;
+        banner.classList.add('visible');
+
+        updateInfoCard(currentStep);
+
+        document.querySelectorAll('.step-item').forEach(e => e.classList.remove('active'));
+        document.getElementById(`step-${currentStep}`).classList.add('active');
+        
+        document.getElementById('btn-next').innerText = "NEXT STEP >";
+        input.disabled = true;
+
+        switch(currentStep) {
+            case 0: createRawBlock(input.value); break;
+            case 1: tokenize(); break;
+            case 2: removeStopwords(); break;
+            case 3: lemmatize(); break;
+            case 4: vectorize(); break;
+            case 5: embedding(); break;
+            case 6: neuralNet(); break;
+        }
+    }
+
+    // --- SMOOTH ANIMATIONS ---
+
+    function createRawBlock(text) {
+        const geo = new THREE.BoxGeometry(4, 2.5, 2.5);
+        const mat = new THREE.MeshPhongMaterial({ 
+            map: createTextTexture("INPUT", ACCENT_HEX, WHITE_HEX, '#000000') 
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(0, 10, 0);
+        mesh.castShadow = true;
+        scene.add(mesh);
+        meshes.push({ mesh: mesh, text: text, type: 'raw' });
+        
+        gsap.to(mesh.position, { y: 2, duration: 1.2, ease: "elastic.out(1, 0.75)" });
+    }
+
+    function tokenize() {
+        const raw = meshes[0];
+        scene.remove(raw.mesh); 
+        const text = raw.text; 
+        meshes = []; 
+
+        const tokens = text.trim().split(/\s+/);
+        const spacing = 3.2;
+        const totalWidth = (tokens.length - 1) * spacing;
+        const startX = -totalWidth / 2;
+
+        tokens.forEach((t, i) => {
+            const geo = new THREE.BoxGeometry(2.5, 2.5, 2.5);
+            const mat = new THREE.MeshPhongMaterial({ 
+                map: createTextTexture(t, ACCENT_HEX, WHITE_HEX, '#000000') 
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(0, 2, 0);
+            mesh.castShadow = true;
+            scene.add(mesh);
+            meshes.push({ mesh: mesh, text: t.toUpperCase(), active: true });
+            
+            gsap.to(mesh.position, { x: startX + (i * spacing), duration: 0.9, delay: i * 0.05, ease: "back.out(1.4)" });
+        });
+    }
+
+    function removeStopwords() {
+        meshes.forEach((obj, i) => {
+            if(STOPWORDS.includes(obj.text)) {
+                obj.active = false;
+                obj.mesh.material.map = createTextTexture(obj.text, '#ffffff', '#dc2626', '#dc2626');
+                
+                gsap.to(obj.mesh.position, { y: -8, duration: 1.2, delay: 0.1, ease: "power2.in" });
+                gsap.to(obj.mesh.rotation, { x: Math.random()*2, z: Math.random()*2, duration: 1.2 });
+            }
+        });
+    }
+
+    function lemmatize() {
+        meshes.forEach(obj => {
+            if(!obj.active) return;
+            for (const key in LEMMAS) {
+                if (obj.text.includes(key) || obj.text === key) {
+                    const newText = LEMMAS[key];
+                    obj.text = newText;
+                    
+                    gsap.to(obj.mesh.rotation, { y: Math.PI * 2, duration: 0.8, ease: "back.out(1.2)" });
+                    setTimeout(() => {
+                        obj.mesh.material.map = createTextTexture(newText, ACCENT_HEX, WHITE_HEX, '#000000');
+                    }, 400);
+                }
+            }
+        });
+    }
+
+    function vectorize() {
+        meshes.forEach((obj, i) => {
+            if(!obj.active) return;
+            const height = Math.random() * 4 + 2; 
+            
+            gsap.to(obj.mesh.scale, { x: 0.4, z: 0.4, y: height, duration: 1, ease: "power3.inOut" });
+            const newY = (height * 2.5) / 2; 
+            gsap.to(obj.mesh.position, { y: newY, duration: 1, ease: "power3.inOut" });
+            
+            setTimeout(() => {
+                obj.mesh.material = new THREE.MeshPhongMaterial({ 
+                    color: ACCENT_COLOR, 
+                    shininess: 80 
+                }); 
+            }, 500);
+        });
+    }
+
+    function embedding() {
+        const axesHelper = new THREE.AxesHelper(10);
+        axesHelper.userData.isTemp = true;
+        scene.add(axesHelper);
+        meshes.forEach((obj, i) => {
+            if(!obj.active) return;
+            const tx = (Math.random() * 8) - 4; 
+            const ty = (Math.random() * 6) + 1; 
+            const tz = (Math.random() * 6) - 3; 
+            
+            gsap.to(obj.mesh.position, { x: tx, y: ty, z: tz, duration: 2, ease: "power2.inOut" });
+            
+            const points = [new THREE.Vector3(0,0,0), new THREE.Vector3(tx, ty, tz)];
+            const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+            const lineMat = new THREE.LineBasicMaterial({ color: ACCENT_COLOR, transparent: true, opacity: 0.6 });
+            const line = new THREE.Line(lineGeo, lineMat);
+            line.userData.isTemp = true;
+            scene.add(line);
+        });
+        
+        gsap.to(camera.position, { x: 0, y: 12, z: 35, duration: 2.5, ease: "power2.inOut" });
+    }
+
+    function neuralNet() {
+        const geo = new THREE.IcosahedronGeometry(3, 1);
+        const mat = new THREE.MeshPhongMaterial({ 
+            color: ACCENT_COLOR, 
+            emissive: ACCENT_COLOR,
+            emissiveIntensity: 0.3,
+            wireframe: true 
+        });
+        const brain = new THREE.Mesh(geo, mat);
+        brain.userData.isTemp = true;
+        brain.position.set(0, 6, 0); 
+        scene.add(brain);
+        
+        meshes.forEach(obj => {
+            if(obj.active) {
+                gsap.to(obj.mesh.position, { x: 0, y: 6, z: 0, duration: 1, ease: "power4.in" });
+                gsap.to(obj.mesh.scale, { x: 0, y: 0, z: 0, duration: 1 });
+            }
+        });
+
+        gsap.to(brain.rotation, { y: Math.PI * 4, duration: 4, ease: "none" });
+        gsap.to(mat, { emissiveIntensity: 1, duration: 0.6, yoyo: true, repeat: 3 });
+        
+        setTimeout(() => {
+            const outGeo = new THREE.BoxGeometry(7, 2.5, 0.5);
+            const outMat = new THREE.MeshPhongMaterial({ 
+                map: createTextTexture("POSITIVE", ACCENT_HEX, WHITE_HEX, '#000000') 
+            });
+            const outMesh = new THREE.Mesh(outGeo, outMat);
+            outMesh.userData.isTemp = true;
+            outMesh.position.set(0, 6, 4); 
+            scene.add(outMesh);
+            
+            gsap.from(outMesh.scale, { x:0, y:0, z:0, duration: 0.8, ease: "elastic.out(1, 0.6)" });
+            const btn = document.getElementById('btn-next');
+            btn.innerText = "RESET SIMULATION";
+            btn.onclick = resetSystem;
+        }, 1400);
+    }
+
+    let targetCameraX = 0;
+    document.addEventListener('mousemove', (e) => {
+        const x = (e.clientX / window.innerWidth) * 2 - 1;
+        targetCameraX = x * 3; 
+    });
+    function animate() {
+        requestAnimationFrame(animate);
+        camera.position.x += (targetCameraX - camera.position.x) * 0.05;
+        camera.lookAt(0, 5, 0);
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+</script>
+</body>
+</html>
