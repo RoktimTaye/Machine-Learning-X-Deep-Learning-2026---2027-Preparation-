@@ -71,7 +71,7 @@ def updatefile():
                     fs.write(" "+data)
 
     except Exception as err:
-        print("an error occured as {err}")
+        print(f"an error occured as {err}")
 
 
 def deletefile():
