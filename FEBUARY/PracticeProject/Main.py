@@ -63,3 +63,18 @@ check = int(input("Tell your response :- "))
 
 if check == 1:
     user.createaccount()
+
+if check == 2:
+    user.depositmoney()
+
+if check == 3:
+    user.withdrawmoney()
+
+if check == 4:
+    user.showdetails()
+
+if check == 5:
+    user.updatedetails()
+
+if check == 6:
+    user.Delete()
