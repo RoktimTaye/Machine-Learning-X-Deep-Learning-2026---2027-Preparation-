@@ -14,14 +14,29 @@ class Bank:
             print("No Such File Exists")
     except Exception as err:
         print(f"An Exception has occured as {err}")
-        
+    
+    @classmethod
+    def __update(cls):
+        with open(cls.database,'w') as fs:
+            fs.write(json.dump(Bank.data))
+    
+    @classmethod
+    def __accountgenerate(cls):
+        aplha = random.choices(string.ascii_letters,k=3)
+        num = random.choices(string.digits,k=3)
+        spachar = random.choices("!@#$%^&*",k = 1)
+        id = aplha + num+ spachar
+        random.shuffle(id)
+        return "".join(id)
+    
     def createaccount(self):
         info = {
             "name" : input("Tell your Name :- "),
             "age" : int(input("Tell your Age :- ")),
             "email" : input("Tell your Email :- "),
             "pin" : int(input("Tell your 4 digit pin :- ")),
-            "accountNo" : 1234
+            "accountNo" : Bank.__accountgenerate(),
+            "balance" : 0
         }
         if info['age'] < 18 or len(str(info['pin'])) !=4:
             print("Sorry you cannot create your account")
@@ -32,7 +47,10 @@ class Bank:
             print("Please note down your PIN number")
             
             Bank.data.append(info)
-        
+            Bank.__update()
+    
+    def depositmoney():
+        pass
 user = Bank()
 print("press 1 for creating an account")
 print("press 2 for Deposititing the money in the bank ")
